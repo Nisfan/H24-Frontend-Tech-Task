@@ -1,0 +1,23 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`render article card 1`] = `
+<li
+  className="article"
+>
+  <img
+    alt="article"
+    src="path"
+  />
+  <h2
+    className="name"
+  >
+    name
+  </h2>
+  <p>
+    1,00 €
+  </p>
+  <button>
+    Add to cart
+  </button>
+</li>
+`;

@@ -1,136 +1,69 @@
-import React from 'react';
+import React from "react";
 
-import { Category, Article } from './types';
-import './ProductList.css';
+import { IList, ChildCategory } from "./types";
+import { useProductList } from "./hooks";
 
-var intlNumberFormatValues = ['de-DE', 'currency', 'EUR'];
+import "./ProductList.css";
+import ArticleCard from "./components/ArticleCard";
 
-export var formatter = new Intl.NumberFormat(intlNumberFormatValues[0], {
-  style: intlNumberFormatValues[1],
-  currency: intlNumberFormatValues[2],
-});
-
-type State = {
-  categories: Category[];
-};
-
-export var ArticleCard = ({ article }: { article: Article }) => {
+const CategoryList = ({
+  childCategories,
+}: {
+  childCategories: IList<ChildCategory[]>;
+}) => {
   return (
-    <div className={'article'}>
-      <img src={article.images[0].path} />
-      <div>{article.name}</div>
-      <div>{formatter.format(article.prices.regular.value / 100)}</div>
-      <section role="button">Add to cart</section>
-    </div>
-  )
+    <ul>
+      {childCategories.list.map(({ name, urlPath }) => {
+        return (
+          <li key={urlPath}>
+            <a href={`/${urlPath}`}>{name}</a>
+          </li>
+        );
+      })}
+    </ul>
+  );
 };
 
-class ArticleList extends React.Component {
-  state: State = {
-    categories: [],
-  };
+/* Use descriptive and meaningful names for React components */
+const ProductListPage = () => {
+  const { loading, categories } = useProductList();
 
-  componentDidMount() {
-    var xhr = new XMLHttpRequest();
-
-    xhr.open('POST', '/graphql');
-    xhr.setRequestHeader('Content-Type', 'application/json');
-
-    xhr.send(JSON.stringify({
-      query: `{
-        categories(ids: "156126", locale: de_DE) {
-          name
-          articleCount
-          childrenCategories {
-            name
-            urlPath
-          }
-          categoryArticles(first: 50) {
-            articles {
-              name
-              variantName
-              prices {
-                currency
-                regular {
-                  value
-                }
-              }
-              images(
-                format: WEBP
-                maxWidth: 200
-                maxHeight: 200
-                limit: 1
-              ) {
-                path
-              }
-            }
-          }
-        }
-      }`,
-    }));
-
-    xhr.onload = () => {
-      if (xhr.status === 200) {
-        var response = JSON.parse(xhr.response);
-
-        this.setState({ categories: response.data.categories });
-      }
-    }
-  }
-
-  render() {
-    var articles = this.state.categories.map((category) => {
-      return category.categoryArticles.articles.map((article) => {
-        return <ArticleCard article={article} />;
-      });
+  const articles = categories.map((category) => {
+    return category.categoryArticles.articles.map((article, index) => {
+      /* better to avoid using index as key since order of articles may change and impact performance,
+       * so use unique id from query */
+      /* I couldn't find unique id in the query so I am using index */
+      return <ArticleCard key={index} article={article} />;
     });
+  });
 
-    return (
-      <div className={'page'}>
-        <div className={'header'}>
-          <strong>home24</strong>
-          <input placeholder={'Search'} />
-        </div>
+  return (
+    <>
+      <aside className="sidebar">
+        <h2>Kategorien</h2>
 
-        <div className={'sidebar'}>
-          <h3>Kategorien</h3>
-          {this.state.categories.length ? (
-            <ul>
-              {this.state.categories[0].childrenCategories.map(({ name, urlPath }) => {
-                return (
-                  <li>
-                    <a href={`/${urlPath}`}>{name}</a>
-                  </li>
-                );
-              })}
-            </ul>
-          ) : (
-            'Loading...'
+        {!loading ? (
+          <CategoryList childCategories={categories[0].childrenCategories} />
+        ) : (
+            <p>Loading...</p>
           )}
-        </div>
+      </aside>
 
-        <div className={'content'}>
-          {this.state.categories.length ? (
-            <h1>
-              {this.state.categories[0].name}
-              <small> ({this.state.categories[0].articleCount})</small>
-            </h1>
-          ) : (
-            'Loading...'
+      <section className="content">
+        {!loading ? (
+          <header>
+            <h2>
+              {categories[0].name}
+              <small> ({categories[0].articleCount})</small>
+            </h2>
+          </header>
+        ) : (
+            <p>Loading...</p>
           )}
-          <div className={'articles'}>{articles}</div>
-        </div>
-
-        <div className={'footer'}>
-          Alle Preise sind in Euro (€) inkl. gesetzlicher Umsatzsteuer und Versandkosten.
-        </div>
-      </div>
-    );
-  }
-}
-
-var PLP = () => {
-  return <ArticleList />;
+        <ul className="articles">{articles}</ul>
+      </section>
+    </>
+  );
 };
 
-export default PLP;
+export default ProductListPage;
