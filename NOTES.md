@@ -1,7 +1,7 @@
 ### Following changes are done
 ---
-- Install/Update react and third party deps in `package.json`
-- Install some of the dependencies as dev deps in `package.json`
+- Install/Update react and third party deps
+- Install some of the dependencies as dev deps
 - Rename `ProductList` component name (PLP) into more descriptive name
 - Create `.env.development` file
 - Use `ApolloClient` to fetch graphql data
